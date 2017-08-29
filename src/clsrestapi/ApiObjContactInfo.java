@@ -48,6 +48,24 @@ public class ApiObjContactInfo implements Serializable {
     public List<SocialNetwork> socialNetworks;
     
     /**
+     * Lookup the URL for the specified social network.
+     * @param network This String specifies the social network whose URL you want. It can be
+     * Facebook, Twitter, Instagram or Vimeo.
+     * @return URL for the companies social media page on the specified network. null if no
+     * URL was found for the specified network.
+     */
+    public String getSocialNetworkUrl(String network){
+        for(ListIterator<SocialNetwork> iter = socialNetworks.listIterator(); iter.hasNext();){
+            SocialNetwork sn = iter.next();
+            
+            if( sn.network.equals(network)){
+                return sn.url;
+            }
+        }
+        
+        return null;
+    }
+    /**
      * This method tests to see if the passed object is an instance of
      * this class, and if it is, the object instance data is compared to
      * the current instance's data to see if they are identical.
