@@ -45,6 +45,20 @@ public class Address implements Serializable{
     public String zipcode;
     
     /**
+     * Get the mailing address for the company.
+     * @return String in USPS format.
+     */
+    public String getMailingAddress(){
+        StringBuilder sb = new StringBuilder(name).append(Constants.NL);
+        
+        sb.append(street).append(Constants.NL);
+        sb.append(city).append(", ");
+        sb.append(state).append(' ');
+        sb.append(zipcode).append(Constants.NL);
+        
+        return sb.toString();        
+    }
+    /**
      * This method tests to see if the passed object is an instance of
      * this class, and if it is, the object instance data is compared to
      * the current instance's data to see if they are identical.
