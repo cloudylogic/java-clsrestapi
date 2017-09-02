@@ -22,7 +22,7 @@ import java.io.Serializable;
  * contain two common objects, an ApiVer (this class) and a {@link DbgObj}.
  * @author ken
  */
-public class ApiVer implements Serializable{
+public class ApiVer implements Serializable, Cloneable{
     /**
      * the API name
      */
@@ -77,6 +77,16 @@ public class ApiVer implements Serializable{
                 apiDataVersion.equals(ai.apiDataVersion);
     }
 
+    /**
+     * Implement support for cloning of the ApiVer object.
+     * @return Object that is a duplicate of the current instance
+     * @throws CloneNotSupportedException 
+     */
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        return super.clone();
+    }
+    
     /**
      * Generates a printable version of the ApiVer object.
      * 
