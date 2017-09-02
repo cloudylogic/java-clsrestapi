@@ -36,6 +36,17 @@ public class ApiObjReels implements Serializable{
     public List<Video> reelList;
     
     /**
+     * Get the demo reel at the index specified by 'reel'. TODO: Should this be a clone???
+     * @param reel The demo reel position in the list.
+     * @return Specified demo reel or null if 'reel' is out of range.
+     */
+    public Video getReel(int reel){
+        if (reel < this.numReels ){
+            return reelList.get(reel);
+        }
+        return null;
+    }
+    /**
      * This method tests to see if the passed object is an instance of
      * this class, and if it is, the object instance data is compared to
      * the current instance's data to see if they are identical.

@@ -36,6 +36,27 @@ public class ApiObjVersions implements Serializable{
     public List<ApiVer> apiList;
     
     /**
+     * Return the ApiVer object of the specified API. This is a cloned version of
+     * the object that's stored in the object's apiList vector.
+     * @param apiName The name of the API whose version object you want.
+     * @return ApiVer for specified API or null if not found/present.
+     */
+    public ApiVer getApiVersion(String apiName){
+        int counter = 0;
+        for(ListIterator<ApiVer> iter = apiList.listIterator(); iter.hasNext();){
+            ApiVer version = iter.next();
+            
+            if (apiName.equals(version.apiName)){
+                try {
+                    return (ApiVer) version.clone();
+                } catch (CloneNotSupportedException ex) {
+
+                }
+            }
+        }
+        return null;
+    }
+    /**
      * This method tests to see if the passed object is an instance of
      * this class, and if it is, the object instance data is compared to
      * the current instance's data to see if they are identical.
