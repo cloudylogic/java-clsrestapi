@@ -95,6 +95,7 @@ public abstract class Base<T> implements Serializable{
      * AssertionError.
      * 
      * @return String containing the JSON data from the web service.
+     * @throws clsrestapi.CRAException
      */
     public String loadJSONfromWebService() throws CRAException {
         try{
@@ -150,6 +151,7 @@ public abstract class Base<T> implements Serializable{
      * @param filename is the name of the file to write to. It is overwritten
      * if it already exists.
      * @return boolean indicating whether the serialization was successful.
+     * @throws clsrestapi.CRAException
      */
     public boolean serialize(String filename) throws CRAException {
         boolean retVal = true;
@@ -177,6 +179,7 @@ public abstract class Base<T> implements Serializable{
      * from.
      * @param filename is the name of the file to read from.
      * @return T instance
+     * @throws clsrestapi.CRAException
      */
     public T deSerialize(String filename) throws CRAException {
         T obj;
