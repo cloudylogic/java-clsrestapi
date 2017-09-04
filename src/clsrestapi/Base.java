@@ -31,7 +31,7 @@ import java.util.Collections;
  * @param <T> When this class is extended, you must specify the class of the
  * extender that will be returned by the abstract methods within.
  */
-public abstract class Base<T> implements Serializable{
+public abstract class Base<T extends Base> implements Serializable{
 
     /**
      * This URL is the fully qualified URL for this API instance.
@@ -182,21 +182,29 @@ public abstract class Base<T> implements Serializable{
      * @throws clsrestapi.CRAException
      */
     public T deSerialize(String filename) throws CRAException {
-        T obj;
+        Object obj;
         // save the object to file
         FileInputStream fis;
         ObjectInputStream in;
         try {
             fis = new FileInputStream(filename);
             in = new ObjectInputStream(fis);
-            obj = (T) in.readObject();
+            obj = in.readObject();
             in.close();
+            if( ! obj.getClass().isInstance(this) ){
+                throw new CRAException("Got unexpected class from readObject: " + obj.getClass().toString());
+            }
+            
         } catch (InvalidClassException | FileNotFoundException ex){
             throw new CRAException(ex.getMessage());
         } catch (IOException | ClassNotFoundException ex) {
             throw new CRAException(ex.getMessage());
         }
-        return obj;
+        // This was the only way I could find to suppress the cast warning.
+        @SuppressWarnings("unchecked")
+        T craObj = (T) obj;     // I checked above that we have the right type...
+        
+        return craObj;
     }
     
     /**
