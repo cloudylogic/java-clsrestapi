@@ -16,6 +16,7 @@
 package clsrestapi;
 
 import java.io.Serializable;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
@@ -43,14 +44,13 @@ public class ApiObjVersions implements Serializable{
      */
     public ApiVer getApiVersion(String apiName){
         int counter = 0;
-        for(ListIterator<ApiVer> iter = apiList.listIterator(); iter.hasNext();){
-            ApiVer version = iter.next();
-            
-            if (apiName.equals(version.apiName)){
+        
+        for (ApiVer version : apiList) {
+            if( apiName.equals(version.apiName)){
                 try {
                     return (ApiVer) version.clone();
-                } catch (CloneNotSupportedException ex) {
-
+                } catch(CloneNotSupportedException ex){
+                    
                 }
             }
         }
