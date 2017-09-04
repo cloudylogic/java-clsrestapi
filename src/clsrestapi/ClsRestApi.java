@@ -17,11 +17,8 @@ package clsrestapi;
  */
 
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
-class ApiWrapper {
+class ApiWrapper<T extends Base> {
     protected boolean loaded;
     protected boolean fromCache;
     protected boolean fromRemote;
@@ -29,15 +26,27 @@ class ApiWrapper {
     protected String cacheName;
     private final Cache cache;
     private final Versions currentVersions;
+    public T api;
     
-    public ApiWrapper(Cache cache, String apiName, Versions currentVersions){
+    public ApiWrapper(T api, Cache cache, String apiName, Versions currentVersions){
         this.loaded = false;
         this.fromCache = false;
         this.fromRemote = false;
+        this.api = api;
         this.cache = cache;
         this.apiName = apiName;
         this.cacheName = cache.absolutePath(apiName);
         this.currentVersions = currentVersions;
+        try {
+            T craObj = init();
+            
+            //TODO: I don't think this check is needed, since I already
+            //verified it in the init() API. Should I remove this one?
+            api = craObj.getClass().isInstance(api) ? craObj : null;
+        } catch(CRAException E){
+            api = null;
+        }
+        loaded = api != null;
     }
     
     public void logMsg(String msg){
@@ -65,26 +74,35 @@ class ApiWrapper {
     /**
      * Load the specified CLS Rest Object from the server, and then Serialize it
      * to the cache for the next time around.
-     * @param craClass
-     * @param craObj
      * @return Returns the loaded object, regardless of whether serialization worked.
      * Returns null if the load() method failed...
      * @throws CRAException 
      */
-    private Object loadAndSerialize(Class<?> craClass, Object craObj) throws CRAException {
-        Object tempObj;
-        Method load;
+    private T loadAndSerialize() throws CRAException {
+        T tempObject;
         
         try {
             /*
             Make the network call to reload this API object from the server.
             */
-            load = craClass.getMethod("load");
-            tempObj = load.invoke(craObj);
+            Object tmpObj = api.load();
+            /*
+            Okay, T refers to a class that is derived from Base, so if we try to
+            cast tmpObj to T, we'll get a warning that it's unsafe. So what we need
+            to do here is make sure that tmpObj is actually an instance of api, which
+            is of type T, and if so, then we'll suppress the warning and do the cast.
+            */
+            if( tmpObj.getClass().isInstance(api)){
+                @SuppressWarnings("unchecked")
+                T tmp1 = (T) tmpObj;
+                tempObject = tmp1;
+            } else {
+                tempObject = null;
+            }
             /*
             it'll be null if an error occurred when we tried to make the server call.
             */
-            if(tempObj != null){
+            if(tempObject != null){
                 /*
                 Set the fromCache and fromRemote flags to indicate where this object came from
                 */
@@ -94,18 +112,17 @@ class ApiWrapper {
                     Serialize the newly updated object to the cache. Right now, I'm not really
                     caring if this fails, but I would like to address that at some point. TODO:
                     */
-                    Method serialize = craClass.getMethod("serialize", new Class[] {String.class});
-                    serialize.invoke(tempObj,cacheName);
-                } catch (IllegalAccessException | IllegalArgumentException | NoSuchMethodException | SecurityException | InvocationTargetException E){
+                    tempObject.serialize(cacheName);
+                } catch (IllegalArgumentException | SecurityException E){
                     // TODO do we need some way to detect this failure...
                     logMsg("API [" + apiName + "] failed serialization: " + E.getMessage());
                 }
             }
-        } catch (IllegalAccessException | IllegalArgumentException | NoSuchMethodException | SecurityException | InvocationTargetException E) {
+        } catch (IllegalArgumentException | SecurityException E) {
             logMsg("Exception: " + E.toString() + " msg: " + E.getMessage());
-            tempObj = null;  // Make sure that we signal the load failure to the caller.
+            tempObject = null;  // Make sure that we signal the load failure to the caller.
         }
-        return tempObj;
+        return tempObject;
     }
 
     
@@ -114,13 +131,11 @@ class ApiWrapper {
      * the network API call. If it's created again, then cache it, for next time. Before
      * just taking the cached version, check to see if the latest version reported by
      * the server is newer or has newer data, and if so, invalidate the cache, and reload it.
-     * @param craClass
-     * @param craObj
      * @return A loaded CLS REST API of specified class 'craClass'.
      * @throws CRAException 
      */
-    protected final Object init(Class<?> craClass, Object craObj) throws CRAException {
-        Object tempObject;
+    private T init() throws CRAException {
+        T tempObject;
         
         if( cache.itemExists(apiName)){
             /*
@@ -129,14 +144,25 @@ class ApiWrapper {
             logMsg("API [" + apiName + "] is in the cache: " + cacheName);
             
             try{
-                Method deSerialize = craClass.getMethod("deSerialize", new Class[] {String.class});
-                
-                tempObject = deSerialize.invoke(craObj, cacheName);
+                Object tmpObj = api.deSerialize(cacheName);
                 /*
-                Set the fromCache and fromRemote flags to indicate where this object came from
+                Okay, T refers to a class that is derived from Base, so if we try to
+                cast tmpObj to T, we'll get a warning that it's unsafe. So what we need
+                to do here is make sure that tmpObj is actually an instance of api, which
+                is of type T, and if so, then we'll suppress the warning and do the cast.
                 */
-                setFromCache();
-            } catch(IllegalAccessException | IllegalArgumentException | NoSuchMethodException | SecurityException | InvocationTargetException E){
+                if( tmpObj.getClass().isInstance(api)){
+                    @SuppressWarnings("unchecked")
+                    T tmp1 = (T) tmpObj;
+                    tempObject = tmp1;
+                    /*
+                    Set the fromCache and fromRemote flags to indicate where this object came from
+                    */
+                    setFromCache();
+                } else {
+                    tempObject = null;
+                }
+            } catch(IllegalArgumentException | SecurityException E){
                 logMsg("Exception: " + E.toString() + " msg: " + E.getMessage());
                 tempObject = null; // make sure the object is null...
             }
@@ -149,7 +175,7 @@ class ApiWrapper {
                 just want to make a fresh new object and then update the cache for next time.
                 */
                 logMsg("API [" + apiName + "] failed to load from cache. Loading from remote.");
-                tempObject = loadAndSerialize(craClass, craObj);
+                tempObject = loadAndSerialize();
             } else if ( currentVersions.apiObj != null){
                 /*
                 The previous check (currentVersions.apiObj) will be null if the server was down when
@@ -164,34 +190,25 @@ class ApiWrapper {
                 */
                 
                 try {
-                    Field apiVerField = craClass.getField("apiVer");
-                    
-                    Object cachedApiVerObject = apiVerField.get(tempObject);
-                    ApiVer cachedApiVer = cachedApiVerObject instanceof ApiVer ? (ApiVer)cachedApiVerObject : null;
-                    
                     /*
                     Make sure that cachedApiVer is a proper ApiVer object. If it isn't for some
                     strange reason, no big deal, we just can't determine if a reload is required.
                     However, if this does happen every time, something is wrong...
                     */
-                    if (cachedApiVer != null) {
-                        ApiVer latestApiVer = currentVersions.apiObj.getApiVersion(apiName);
-                        /*
-                        It shouldn't be possible for latestApiVer to be null, but check anyway!
-                        */
-                        if (latestApiVer != null && latestApiVer.equals(cachedApiVer)){
-                            logMsg("Cached version and latest version are the same");
-                        } else {
-                            /*
-                            The ApiVer objects differ, so let's reload this API from the server and update the cache
-                            */
-                            logMsg("Cached version and latest version are different. Reloading from server...");
-                            tempObject = loadAndSerialize(craClass, craObj);
-                        }
+                    ApiVer latestApiVer = currentVersions.apiObj.getApiVersion(apiName);
+                    /*
+                    It shouldn't be possible for latestApiVer to be null, but check anyway!
+                    */
+                    if (latestApiVer != null && latestApiVer.equals(tempObject.apiVer)){
+                        logMsg("Cached version and latest version are the same");
                     } else {
-                        logMsg("cachedApiVer is null. This should not happen often, if at all.");
+                        /*
+                        The ApiVer objects differ, so let's reload this API from the server and update the cache
+                        */
+                        logMsg("Cached version and latest version are different. Reloading from server...");
+                        tempObject = loadAndSerialize();
                     }
-                } catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException E) {
+                } catch (SecurityException | IllegalArgumentException E) {
                     logMsg("Exception: " + E.toString() + " msg: " + E.getMessage());
                 }
             } else {
@@ -203,99 +220,9 @@ class ApiWrapper {
             This is the path when the object isn't currently cached...
             */
             logMsg("API [" + apiName + "] is NOT in the cache");
-            tempObject = loadAndSerialize(craClass, craObj);
+            tempObject = loadAndSerialize();
         }
         return tempObject;  
-    }
-}
-
-class CraAboutUs extends ApiWrapper {
-    public AboutUs aboutUs;
-    
-    public CraAboutUs(Cache cache, Versions currentVersions){
-        
-        super(cache, Constants.API_ABOUT_US, currentVersions);
-        
-        try {
-            Object craObj = init(AboutUs.class, new AboutUs());
-            
-            aboutUs = craObj instanceof AboutUs ? (AboutUs)craObj : null;
-        } catch(CRAException E){
-            aboutUs = null;
-        }
-        loaded = aboutUs != null;
-    }
-}
-
-class CraVersions extends ApiWrapper {
-    public Versions versions;
-    
-    public CraVersions(Cache cache, Versions currentVersions){
-        
-        super(cache, Constants.API_VERSIONS, currentVersions);
-        
-        try {
-            Object craObj = init(Versions.class, new Versions());
-            
-            versions = craObj instanceof Versions ? (Versions)craObj : null;
-        } catch(CRAException E){
-            versions = null;
-        }
-        loaded = versions != null;
-    }
-}
-
-class CraContactInfo extends ApiWrapper {
-    public ContactInfo contactInfo;
-    
-    public CraContactInfo(Cache cache, Versions currentVersions){
-        
-        super(cache, Constants.API_CONTACT_INFO, currentVersions);
-        
-        try {
-            Object craObj = init(ContactInfo.class, new ContactInfo());
-            
-            contactInfo = craObj instanceof ContactInfo ? (ContactInfo)craObj : null;
-        } catch(CRAException E){
-            contactInfo = null;
-        }
-        loaded = contactInfo != null;
-    }
-}
-
-class CraReels extends ApiWrapper {
-    public Reels reels;
-    
-    public CraReels(Cache cache, Versions currentVersions){
-        
-        super(cache, Constants.API_REELS, currentVersions);
-        
-        try {
-            Object craObj = init(Reels.class, new Reels());
-            
-            reels = craObj instanceof Reels ? (Reels)craObj : null;
-        } catch(CRAException E){
-            reels = null;
-        }
-        loaded = reels != null;
-    }
-}
-
-class CraOurWork extends ApiWrapper {
-    public OurWork ourWork;
-    
-    public CraOurWork(Cache cache, Versions currentVersions){
-        
-        super(cache, Constants.API_OUR_WORK, currentVersions);
-        
-        try {
-            Object craObj = init(OurWork.class, new OurWork());
-            
-            ourWork = craObj instanceof OurWork ? (OurWork)craObj : null;
-        } catch(CRAException E){
-            ourWork = null;
-        }
-        loaded = ourWork != null;
     }
 }
 
@@ -307,11 +234,11 @@ public class ClsRestApi {
     private final Cache objCache;
     private final Versions currentVersions;
     
-    private CraAboutUs craAboutUs = null;
-    private CraVersions craVersions = null;
-    private CraContactInfo craContactInfo = null;
-    private CraReels craReels = null;
-    private CraOurWork craOurWork = null;
+    private ApiWrapper<AboutUs> craAboutUs = null;
+    private ApiWrapper<Versions> craVersions = null;
+    private ApiWrapper<ContactInfo> craContactInfo = null;
+    private ApiWrapper<Reels> craReels = null;
+    private ApiWrapper<OurWork> craOurWork = null;
     
     
     public ClsRestApi(String localCache) throws IOException, CRAException {
@@ -325,33 +252,33 @@ public class ClsRestApi {
     }
     
     public AboutUs getAboutUs(){
-        if (craAboutUs == null) craAboutUs = new CraAboutUs(objCache, this.currentVersions);
+        if (craAboutUs == null) craAboutUs = new ApiWrapper<>(new AboutUs(), objCache, Constants.API_ABOUT_US, this.currentVersions);
         
-        return craAboutUs.loaded ? craAboutUs.aboutUs : null;
+        return craAboutUs.loaded ? craAboutUs.api : null;
     }
     
     public Versions getVersions(){
-        if (craVersions == null) craVersions = new CraVersions(objCache, this.currentVersions);
+        if (craVersions == null) craVersions = new ApiWrapper<>(new Versions(), objCache, Constants.API_VERSIONS, this.currentVersions);
         
-        return craVersions.loaded ? craVersions.versions : null;
+        return craVersions.loaded ? craVersions.api : null;
     }
     
     public ContactInfo getContactInfo(){
-        if (craContactInfo == null) craContactInfo = new CraContactInfo(objCache, this.currentVersions);
+        if (craContactInfo == null) craContactInfo = new ApiWrapper<>(new ContactInfo(), objCache, Constants.API_CONTACT_INFO, this.currentVersions);
         
-        return craContactInfo.loaded ? craContactInfo.contactInfo : null;
+        return craContactInfo.loaded ? craContactInfo.api : null;
     }
     
     public Reels getReels(){
-        if (craReels == null) craReels = new CraReels(objCache, this.currentVersions);
+        if (craReels == null) craReels = new ApiWrapper<>(new Reels(), objCache, Constants.API_REELS, this.currentVersions);
         
-        return craReels.loaded ? craReels.reels : null;
+        return craReels.loaded ? craReels.api : null;
     }
     
     public OurWork getOurWork(){
-        if (craOurWork == null) craOurWork = new CraOurWork(objCache, this.currentVersions);
+        if (craOurWork == null) craOurWork = new ApiWrapper<>(new OurWork(), objCache, Constants.API_OUR_WORK, this.currentVersions);
         
-        return craOurWork.loaded ? craOurWork.ourWork : null;
+        return craOurWork.loaded ? craOurWork.api : null;
     }
     
 }
