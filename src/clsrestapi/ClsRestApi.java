@@ -28,25 +28,29 @@ class ApiWrapper<T extends Base> {
     private final Versions currentVersions;
     public T api;
     
-    public ApiWrapper(T api, Cache cache, String apiName, Versions currentVersions){
+    public ApiWrapper(T apiInstance, Cache cache, String apiName, Versions currentVersions){
         this.loaded = false;
         this.fromCache = false;
         this.fromRemote = false;
-        this.api = api;
         this.cache = cache;
         this.apiName = apiName;
         this.cacheName = cache.absolutePath(apiName);
         this.currentVersions = currentVersions;
-        try {
-            T craObj = init();
-            
-            //TODO: I don't think this check is needed, since I already
-            //verified it in the init() API. Should I remove this one?
-            api = craObj.getClass().isInstance(api) ? craObj : null;
-        } catch(CRAException E){
-            api = null;
-        }
-        loaded = api != null;
+
+        // For the initialization, we will set api to the new instance passed
+        // to the constructor. This will give us access to the serialization
+        // methods and the json loader for the class T inside init().
+        this.api = apiInstance;
+
+        // initialize an instance of T to a temp object
+        T craObj = init();
+                
+        // Overwrite the temp instance passed in with the newly initialized one
+        // I don't think the check is needed, since I already verified it in
+        // the init() method. TODO: Should I just assign it?
+        this.api = craObj.getClass().isInstance(api) ? craObj : null;
+        
+        loaded = this.api != null;
     }
     
     public void logMsg(String msg){
@@ -78,7 +82,7 @@ class ApiWrapper<T extends Base> {
      * Returns null if the load() method failed...
      * @throws CRAException 
      */
-    private T loadAndSerialize() throws CRAException {
+    private T loadAndSerialize() {
         T tempObject;
         
         try {
@@ -113,12 +117,12 @@ class ApiWrapper<T extends Base> {
                     caring if this fails, but I would like to address that at some point. TODO:
                     */
                     tempObject.serialize(cacheName);
-                } catch (IllegalArgumentException | SecurityException E){
+                } catch (CRAException E){
                     // TODO do we need some way to detect this failure...
                     logMsg("API [" + apiName + "] failed serialization: " + E.getMessage());
                 }
             }
-        } catch (IllegalArgumentException | SecurityException E) {
+        } catch (Exception E) {
             logMsg("Exception: " + E.toString() + " msg: " + E.getMessage());
             tempObject = null;  // Make sure that we signal the load failure to the caller.
         }
@@ -134,7 +138,7 @@ class ApiWrapper<T extends Base> {
      * @return A loaded CLS REST API of specified class 'craClass'.
      * @throws CRAException 
      */
-    private T init() throws CRAException {
+    private T init() {
         T tempObject;
         
         if( cache.itemExists(apiName)){
@@ -162,7 +166,7 @@ class ApiWrapper<T extends Base> {
                 } else {
                     tempObject = null;
                 }
-            } catch(IllegalArgumentException | SecurityException E){
+            } catch(CRAException E){
                 logMsg("Exception: " + E.toString() + " msg: " + E.getMessage());
                 tempObject = null; // make sure the object is null...
             }
@@ -188,28 +192,18 @@ class ApiWrapper<T extends Base> {
                 Okay, let's grab the current ApiVer from the object that was loaded from cache, and
                 see if it's the same as the "latest" version that the server has.
                 */
-                
-                try {
+                ApiVer latestApiVer = currentVersions.apiObj.getApiVersion(apiName);
+                /*
+                It shouldn't be possible for latestApiVer to be null, but check anyway!
+                */
+                if (latestApiVer != null && latestApiVer.equals(tempObject.apiVer)){
+                    logMsg("Cached version and latest version are the same");
+                } else {
                     /*
-                    Make sure that cachedApiVer is a proper ApiVer object. If it isn't for some
-                    strange reason, no big deal, we just can't determine if a reload is required.
-                    However, if this does happen every time, something is wrong...
+                    The ApiVer objects differ, so let's reload this API from the server and update the cache
                     */
-                    ApiVer latestApiVer = currentVersions.apiObj.getApiVersion(apiName);
-                    /*
-                    It shouldn't be possible for latestApiVer to be null, but check anyway!
-                    */
-                    if (latestApiVer != null && latestApiVer.equals(tempObject.apiVer)){
-                        logMsg("Cached version and latest version are the same");
-                    } else {
-                        /*
-                        The ApiVer objects differ, so let's reload this API from the server and update the cache
-                        */
-                        logMsg("Cached version and latest version are different. Reloading from server...");
-                        tempObject = loadAndSerialize();
-                    }
-                } catch (SecurityException | IllegalArgumentException E) {
-                    logMsg("Exception: " + E.toString() + " msg: " + E.getMessage());
+                    logMsg("Cached version and latest version are different. Reloading from server...");
+                    tempObject = loadAndSerialize();
                 }
             } else {
                 logMsg("currentVersions not available, cannot check if refresh needed for API [" + apiName + "]");
