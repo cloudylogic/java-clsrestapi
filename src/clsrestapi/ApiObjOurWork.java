@@ -35,6 +35,18 @@ public class ApiObjOurWork implements Serializable{
      */
     public List<ShowCaseVideo> videoList;
     
+     /**
+     * Get the showcase video at the index specified by 'showCaseVideo'. TODO: Should this be a clone???
+     * @param showCaseVideo The showcase video position in the list.
+     * @return Specified showcase video or null if 'reel' is out of range.
+     */
+    public ShowCaseVideo getShowCaseVideo(int showCaseVideo){
+        if (showCaseVideo < this.numVideos ){
+            return videoList.get(showCaseVideo);
+        }
+        return null;
+    }
+
     /**
      * This method tests to see if the passed object is an instance of
      * this class, and if it is, the object instance data is compared to
