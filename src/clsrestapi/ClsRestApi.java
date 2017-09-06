@@ -17,11 +17,38 @@ package clsrestapi;
  */
 
 import java.io.IOException;
+import java.nio.file.Path;
 
-class ApiWrapper<T extends Base> {
+class CacheHelpers{
+    private boolean fromCache;
+    private boolean fromRemote;
+    
+    public CacheHelpers(){
+        this.fromCache = false;
+        this.fromRemote = false;        
+    }
+
+    protected void setFromCache(){
+        fromCache = true;
+        fromRemote = false;
+    }
+    
+    protected void setFromRemote(){
+        fromCache = false;
+        fromRemote = true;
+    }
+    
+    public boolean loadedFromCache(){
+        return fromCache;
+    }
+    
+    public boolean loadedFromNetwork(){
+        return fromRemote;
+    }    
+}
+
+class ApiWrapper<T extends Base> extends CacheHelpers{
     protected boolean loaded;
-    protected boolean fromCache;
-    protected boolean fromRemote;
     protected String apiName;
     protected String cacheName;
     private final Cache cache;
@@ -30,8 +57,6 @@ class ApiWrapper<T extends Base> {
     
     public ApiWrapper(T apiInstance, Cache cache, String apiName, Versions currentVersions){
         this.loaded = false;
-        this.fromCache = false;
-        this.fromRemote = false;
         this.cache = cache;
         this.apiName = apiName;
         this.cacheName = cache.absolutePath(apiName);
@@ -57,24 +82,6 @@ class ApiWrapper<T extends Base> {
         System.out.println(msg);
     }
     
-    private void setFromCache(){
-        fromCache = true;
-        fromRemote = false;
-    }
-    
-    private void setFromRemote(){
-        fromCache = false;
-        fromRemote = true;
-    }
-    
-    public boolean loadedFromCache(){
-        return fromCache;
-    }
-    
-    public boolean loadedFromNetwork(){
-        return fromRemote;
-    }
-
     /**
      * Load the specified CLS Rest Object from the server, and then Serialize it
      * to the cache for the next time around.
@@ -82,7 +89,7 @@ class ApiWrapper<T extends Base> {
      * Returns null if the load() method failed...
      * @throws CRAException 
      */
-    private T loadAndSerialize() {
+    protected final T loadAndSerialize() {
         T tempObject;
         
         try {
@@ -138,7 +145,7 @@ class ApiWrapper<T extends Base> {
      * @return A loaded CLS REST API of specified class 'craClass'.
      * @throws CRAException 
      */
-    private T init() {
+    protected final T init() {
         T tempObject;
         
         if( cache.itemExists(apiName)){
@@ -220,59 +227,109 @@ class ApiWrapper<T extends Base> {
     }
 }
 
+class ApiWithResourcesWrapper<T extends Base> extends ApiWrapper<T>{
+    private final Cache resCache;
+    private final String resID;
+    private Path networkPath;
+        
+    public ApiWithResourcesWrapper(T apiInstance, Cache objCache, String apiName, Versions currentVersions, Cache resCache, String resID){
+        super(apiInstance, objCache, apiName, currentVersions);
+        this.resCache = resCache;
+        this.resID = resID;         // this should just be used to construct the network path
+        //logMsg("inside with resources");
+    }
+    
+    public void setNetworkPath(){
+        
+    }
+    
+    public String getCachePathName(String resName){
+        return resCache.getDir();
+    }
+}
+
 /**
- *
+ * 
  * @author Ken Lowrie <ken@klowrie.net>
  */
 public class ClsRestApi {
     private final Cache objCache;
+    private final Cache imgCache;
     private final Versions currentVersions;
+    private final String host;
+    private final String clientID;
     
     private ApiWrapper<AboutUs> craAboutUs = null;
     private ApiWrapper<Versions> craVersions = null;
     private ApiWrapper<ContactInfo> craContactInfo = null;
-    private ApiWrapper<Reels> craReels = null;
-    private ApiWrapper<OurWork> craOurWork = null;
+    private ApiWrapper<ImagePaths> craImagePaths = null;
+    private ApiWithResourcesWrapper<Reels> craReels = null;
+    private ApiWithResourcesWrapper<OurWork> craOurWork = null;
     
-    
-    public ClsRestApi(String localCache) throws IOException, CRAException {
-        objCache = new Cache(localCache);
+    public ClsRestApi(String localCache, String clientID, String wsUrl) throws IOException, CRAException {
+        objCache = new Cache(localCache, "objects");
+        imgCache = new Cache(localCache, "images");
+        this.host = wsUrl;
+        this.clientID = clientID;
         /*
         currentVersions holds the results of instantiating a new Versions() object
         from the api server. This one call is necessary so that we are able to determine
         whether any of the additional API objects that are in the cache have gone stale.
         */
-        this.currentVersions = new Versions().load();
+        this.currentVersions = new Versions(wsUrl).load();
+        
+    }
+    public ClsRestApi(String localCache, String clientID) throws IOException, CRAException {
+        this(localCache, clientID, Constants.WSURL);
     }
     
     public AboutUs getAboutUs(){
-        if (craAboutUs == null) craAboutUs = new ApiWrapper<>(new AboutUs(), objCache, Constants.API_ABOUT_US, this.currentVersions);
+        if (craAboutUs == null) craAboutUs = new ApiWrapper<>(new AboutUs(host), objCache, Constants.API_ABOUT_US, this.currentVersions);
         
         return craAboutUs.loaded ? craAboutUs.api : null;
     }
     
     public Versions getVersions(){
-        if (craVersions == null) craVersions = new ApiWrapper<>(new Versions(), objCache, Constants.API_VERSIONS, this.currentVersions);
+        if (craVersions == null) craVersions = new ApiWrapper<>(new Versions(host), objCache, Constants.API_VERSIONS, this.currentVersions);
         
         return craVersions.loaded ? craVersions.api : null;
     }
     
+    public ImagePaths getImagePaths(){
+        if (craImagePaths == null) craImagePaths = new ApiWrapper<>(new ImagePaths(host), objCache, Constants.API_IMAGE_PATHS, this.currentVersions);
+        
+        return craImagePaths.loaded ? craImagePaths.api : null;
+    }
+    
     public ContactInfo getContactInfo(){
-        if (craContactInfo == null) craContactInfo = new ApiWrapper<>(new ContactInfo(), objCache, Constants.API_CONTACT_INFO, this.currentVersions);
+        if (craContactInfo == null) craContactInfo = new ApiWrapper<>(new ContactInfo(host), objCache, Constants.API_CONTACT_INFO, this.currentVersions);
         
         return craContactInfo.loaded ? craContactInfo.api : null;
     }
     
     public Reels getReels(){
-        if (craReels == null) craReels = new ApiWrapper<>(new Reels(), objCache, Constants.API_REELS, this.currentVersions);
+        if (craReels == null) craReels = new ApiWithResourcesWrapper<>(new Reels(host), objCache, Constants.API_REELS, this.currentVersions, imgCache, clientID);
         
         return craReels.loaded ? craReels.api : null;
     }
     
+    public String getReelsResource(String resName){
+        Reels r = getReels();   // force the initialization. TODO: Is this needed?
+        
+        return craReels.getCachePathName(resName);
+    }
+    
     public OurWork getOurWork(){
-        if (craOurWork == null) craOurWork = new ApiWrapper<>(new OurWork(), objCache, Constants.API_OUR_WORK, this.currentVersions);
+        if (craOurWork == null) craOurWork = new ApiWithResourcesWrapper<>(new OurWork(host), objCache, Constants.API_OUR_WORK, this.currentVersions, imgCache, clientID);
         
         return craOurWork.loaded ? craOurWork.api : null;
     }
+    
+    public String getOurWorkResource(String resName){
+        Reels r = getReels();   // force the initialization. TODO: Is this needed?
+        
+        return craOurWork.getCachePathName(resName);
+    }
+    
     
 }
