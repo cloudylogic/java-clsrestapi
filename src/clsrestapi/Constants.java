@@ -28,6 +28,7 @@ public class Constants {
   public static final String API_REELS = "reels";
   public static final String API_OUR_WORK = "our-work";
   public static final String API_VERSIONS = "versions";
+  public static final String API_IMAGE_PATHS = "image-paths";
 
   /**
    * Prevent the caller from constructing objects of this class.
