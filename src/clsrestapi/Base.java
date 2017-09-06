@@ -59,13 +59,13 @@ public abstract class Base<T extends Base> implements Serializable{
      * This allows you to override the host path, primarily useful for debugging.
      * 
      * @param wsUrlRoot The host name to issue the API call to. Default is
-     * http://api.cloudylogic.com.
+     * http://api.cloudylogic.com. If you pass ".", the default will be used.
      * 
      * @param apiName The apiName for this object instance. e.g. reels.
      */
     public Base(String wsUrlRoot,String apiName){
         this.apiName = apiName;
-        this.webServiceUrl = makeUrl(wsUrlRoot);
+        this.webServiceUrl = makeUrl(wsUrlRoot.equals(".") ? Constants.WSURL : wsUrlRoot);
     }
     
     /**
