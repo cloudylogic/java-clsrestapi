@@ -32,10 +32,15 @@ import java.nio.file.attribute.BasicFileAttributes;
 public class Cache {
     private Path cacheDir;
     
-    public Cache(String cacheDir) throws IOException{
-        this.cacheDir = Paths.get(cacheDir);
+    public Cache(String cacheDir, String subCacheDir) throws IOException{
+        if( subCacheDir == null){
+            this.cacheDir = Paths.get(cacheDir);        
+        } else {
+            this.cacheDir = Paths.get(cacheDir, subCacheDir);
+        }
+        //System.out.println("Cache directory is: "+ this.cacheDir);
         
-        if( !Files.isDirectory(this.cacheDir)){
+        if( false == Files.isDirectory(this.cacheDir)){
             //System.out.println("Directory does not exist");
             
             File tmpFile = new File(this.cacheDir.normalize().toString());
@@ -45,9 +50,13 @@ public class Cache {
                 
             }
         }
-        if (!Files.isDirectory(this.cacheDir)){
+        if (false == Files.isDirectory(this.cacheDir)){
             throw new IOException("Unable to create or access the cache directory: " + this.cacheDir.toString());
         }
+    }
+
+    public Cache(String cacheDir) throws IOException{
+        this(cacheDir,null);
     }
     
     public Path getPath(){
