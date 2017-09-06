@@ -32,7 +32,7 @@ public class AboutUs extends Base<AboutUs> implements Serializable{
     /**
      * This constructor allows you to override the base URL when constructing an
      * object. By default, it's http://api.cloudylogic.com/, but can be overridden
-     * as needed. Most common override: localhost:port, for use when you are 
+     * as needed. Most common override: http://localhost:port, for use when you are 
      * running the REST API locally.
      * @param wsUrl the base URL to use for the API call
      */
