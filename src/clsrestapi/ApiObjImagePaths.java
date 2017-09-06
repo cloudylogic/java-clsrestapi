@@ -1,0 +1,104 @@
+/*
+ * Copyright 2017 Ken Lowrie.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package clsrestapi;
+
+import java.io.Serializable;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+
+/**
+ * This class implements the API specific data of image-paths. The common data is
+ * described in the {@link Base} class, and it consists of an {@link ApiVer} object
+ * and a {@link DbgObj} object.
+ * @author ken
+ */
+public class ApiObjImagePaths implements Serializable{
+    /**
+     * the number of ImagePath objects that are in the {@link ApiObjImagePaths#imagePaths} list.
+     */
+    public int  numPaths;
+    /**
+     * the list of ImagePaths represented as {@link ImagePath} objects.
+     */
+    public List<ImagePath> imagePaths;
+    
+    /**
+     * Return the ImagePath object of the specified clientID. This is a cloned version of
+     * the object that's stored in the object's imagePaths vector.
+     * @param clientID The name of the client whose image path object you want.
+     * @return ImagePath for specified API or null if not found.
+     */
+    public ImagePath getImagePath(String clientID){
+        int counter = 0;
+        
+        for (ImagePath imgPath : imagePaths) {
+            if( clientID.equals(imgPath.clientID)){
+                try {
+                    return (ImagePath) imgPath.clone();
+                } catch(CloneNotSupportedException ex){
+                    
+                }
+            }
+        }
+        return null;
+    }
+    /**
+     * This method tests to see if the passed object is an instance of
+     * this class, and if it is, the object instance data is compared to
+     * the current instance's data to see if they are identical.
+     * @param o object whose instance data should be compared to the current instance.
+     * @return boolean indicating whether or not the passed instance data is
+     * a match to the current instance data.
+     */
+    @Override
+    public boolean equals(Object o){
+        if (o == this) {
+            return true;
+        }
+        if (!(o instanceof ApiObjImagePaths)){
+            return false;
+        }
+        
+        ApiObjImagePaths ip = (ApiObjImagePaths)o;
+        
+        return  numPaths == ip.numPaths &&
+                imagePaths.equals(ip.imagePaths);
+    }
+
+    /**
+     * Converts the current object instance data to a formatted string.
+     * @return the current objects' instance data
+     */
+    @Override
+    public String toString(){
+        StringBuilder sb = new StringBuilder("apiObj:").append(Constants.NL);
+        
+        sb.append("\tnumPaths: ").append(numPaths).append(Constants.NL);
+        sb.append("\timagePaths: ").append(Constants.NL);
+        
+        int counter = 0;
+        for( ImagePath imgPath: imagePaths ){
+            
+            sb.append("\t\timagePaths[").append(counter).append("].clientID: ").append(imgPath.clientID).append(Constants.NL);
+            sb.append("\t\timagePaths[").append(counter).append("].imagePath: ").append(imgPath.imagePath).append(Constants.NL);
+            sb.append(Constants.NL);
+            counter++;
+        }
+        return sb.toString();
+    }
+    
+}
