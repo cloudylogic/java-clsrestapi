@@ -87,6 +87,9 @@ public class ApiObjReels implements Serializable{
             sb.append("\t\treelList[").append(counter).append("].title: ").append(video.title).append(Constants.NL);
             sb.append("\t\treelList[").append(counter).append("].url: ").append(video.url).append(Constants.NL);
             sb.append("\t\treelList[").append(counter).append("].sUrl: ").append(video.sUrl).append(Constants.NL);
+            sb.append("\t\treelList[").append(counter).append("].hdUrl: ").append(video.hdUrl).append(Constants.NL);
+            sb.append("\t\treelList[").append(counter).append("].sdUrl: ").append(video.sdUrl).append(Constants.NL);
+            sb.append("\t\treelList[").append(counter).append("].mobileUrl: ").append(video.mobileUrl).append(Constants.NL);
             sb.append("\t\treelList[").append(counter).append("].thumb: ").append(video.thumb).append(Constants.NL);
             sb.append("\t\treelList[").append(counter).append("].frame: ").append(video.frame).append(Constants.NL);
             sb.append(Constants.NL);

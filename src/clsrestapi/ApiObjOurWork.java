@@ -88,6 +88,9 @@ public class ApiObjOurWork implements Serializable{
             sb.append("\t\tvideoList[").append(counter).append("].title: ").append(video.title).append(Constants.NL);
             sb.append("\t\tvideoList[").append(counter).append("].url: ").append(video.url).append(Constants.NL);
             sb.append("\t\tvideoList[").append(counter).append("].sUrl: ").append(video.sUrl).append(Constants.NL);
+            sb.append("\t\tvideoList[").append(counter).append("].hdUrl: ").append(video.hdUrl).append(Constants.NL);
+            sb.append("\t\tvideoList[").append(counter).append("].sdUrl: ").append(video.sdUrl).append(Constants.NL);
+            sb.append("\t\tvideoList[").append(counter).append("].mobileUrl: ").append(video.mobileUrl).append(Constants.NL);
             sb.append("\t\tvideoList[").append(counter).append("].thumb: ").append(video.thumb).append(Constants.NL);
             sb.append("\t\tvideoList[").append(counter).append("].frame: ").append(video.frame).append(Constants.NL);
             sb.append("\t\tvideoList[").append(counter).append("].type: ").append(video.type).append(Constants.NL);
