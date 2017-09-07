@@ -71,6 +71,7 @@ public class DbgObj implements Serializable{
                 request_uri.equals(dbgo.request_uri) && 
                 traceMsgQ.equals(dbgo.traceMsgQ) && 
                 restAPIkeys.equals(dbgo.restAPIkeys) && 
+                query_string == null ||
                 query_string.equals(dbgo.query_string);
     }
     /**
