@@ -113,6 +113,7 @@ public class ApiObjContactInfo implements Serializable {
                 sb.append("\t\tsocialNetworks[").append(counter).append("].network: ").append(sn.network).append(Constants.NL);
                 sb.append("\t\tsocialNetworks[").append(counter).append("].id: ").append(sn.id).append(Constants.NL);
                 sb.append("\t\tsocialNetworks[").append(counter).append("].url: ").append(sn.url).append(Constants.NL);
+                sb.append("\t\tsocialNetworks[").append(counter).append("].image: ").append(sn.image).append(Constants.NL);
                 sb.append(Constants.NL);
                 counter++;
             }
