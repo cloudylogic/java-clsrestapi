@@ -17,7 +17,15 @@ package clsrestapi;
  */
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 class CacheHelpers{
     private boolean fromCache;
@@ -228,23 +236,101 @@ class ApiWrapper<T extends Base> extends CacheHelpers{
 }
 
 class ApiWithResourcesWrapper<T extends Base> extends ApiWrapper<T>{
-    private final Cache resCache;
-    private final String resID;
-    private Path networkPath;
+    private Cache resCache;
+    private final String clientID;
+    private String networkPath;
+    
+    /*
+    I don't think a single cache will work here, because if I detect a change in
+    an API and I reload from the network, I think I need to flush the resources cache.
+    But if only have one cache, then I'll throw everything away, which doesn't really
+    make a lot of sense...
+    */
         
-    public ApiWithResourcesWrapper(T apiInstance, Cache objCache, String apiName, Versions currentVersions, Cache resCache, String resID){
+    public ApiWithResourcesWrapper(T apiInstance, Cache objCache, String apiName, Versions currentVersions, String cacheRoot, String clientID, String networkIP){
         super(apiInstance, objCache, apiName, currentVersions);
-        this.resCache = resCache;
-        this.resID = resID;         // this should just be used to construct the network path
+        
+        String [] cacheDirs = new String [] {"images",clientID,apiName};
+        
+        try {
+            this.resCache = new Cache(cacheRoot,cacheDirs);
+        } catch (IOException ex) {
+            //Logger.getLogger(ApiWithResourcesWrapper.class.getName()).log(Level.SEVERE, null, ex);
+            this.resCache = null;
+        }
+        this.clientID = clientID;         // this should just be used to construct the network path
         //logMsg("inside with resources");
+        
+        networkPath = apiInstance.makeUrl(apiInstance.getWebHost(), networkIP);
+        
+        logMsg("networkPath for " + apiName + " is " + networkPath);
     }
     
-    public void setNetworkPath(){
+    public String getResource(String resName){
         
+        Path localName = Paths.get(resCache.getDir(),resName);
+        
+        if( Files.exists(localName)){
+            System.out.println("File exists in cache, returning it: "+localName.normalize().toString());
+            return localName.normalize().toString();
+        }
+
+        URL networkResource;
+        try {
+            networkResource = new URL(api.makeUrl(networkPath, resName));
+        } catch (MalformedURLException ex) {
+            //Logger.getLogger(ApiWithResourcesWrapper.class.getName()).log(Level.SEVERE, null, ex);
+            networkResource = null;
+        }
+        
+        if (null == networkResource) return null;
+        InputStream in;
+        
+        try {
+            in = networkResource.openStream();
+        } catch (IOException ex) {
+            in = null;
+            //Logger.getLogger(ApiWithResourcesWrapper.class.getName()).log(Level.SEVERE, null, ex);
+        }        
+        
+        if (null == in) return null;
+        
+        boolean retVal = false;
+
+        try {
+            Files.copy(in, localName, StandardCopyOption.REPLACE_EXISTING);
+            retVal = true;  // we copied, return the local version.
+        } catch (IOException ex) {
+            try {
+                in.close();
+                if (Files.deleteIfExists(localName)){
+                    // log a message that we removed it
+                } else {
+                    // log a message that we couldn't delete it.
+                    // should we flush the cache()?
+                }
+            } catch (IOException ex1) {
+            }
+        }
+        
+        try {
+            in.close();
+        } catch (IOException ex) {
+            // Do I care if I couldn't close the input stream? Probably not...
+            //Logger.getLogger(ApiWithResourcesWrapper.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
+        return retVal ? localName.normalize().toString() : null;
     }
     
     public String getCachePathName(String resName){
-        return resCache.getDir();
+        Path localName = Paths.get(resCache.getDir(),resName);
+        
+        return localName.normalize().toString();
+    }
+    
+    public String getNetworkPath(String resName){
+        return api.makeUrl(networkPath, resName);        
     }
 }
 
@@ -254,21 +340,24 @@ class ApiWithResourcesWrapper<T extends Base> extends ApiWrapper<T>{
  */
 public class ClsRestApi {
     private final Cache objCache;
-    private final Cache imgCache;
+    private final String cacheRoot;
+    //private final Cache imgCache;
     private final Versions currentVersions;
+    private final String networkIP;
     private final String host;
     private final String clientID;
     
     private ApiWrapper<AboutUs> craAboutUs = null;
     private ApiWrapper<Versions> craVersions = null;
-    private ApiWrapper<ContactInfo> craContactInfo = null;
     private ApiWrapper<ImagePaths> craImagePaths = null;
+    private ApiWithResourcesWrapper<ContactInfo> craContactInfo = null;
     private ApiWithResourcesWrapper<Reels> craReels = null;
     private ApiWithResourcesWrapper<OurWork> craOurWork = null;
     
     public ClsRestApi(String localCache, String clientID, String wsUrl) throws IOException, CRAException {
         objCache = new Cache(localCache, "objects");
-        imgCache = new Cache(localCache, "images");
+        cacheRoot = localCache;
+        //imgCache = new Cache(localCache, "images");
         this.host = wsUrl;
         this.clientID = clientID;
         /*
@@ -276,7 +365,14 @@ public class ClsRestApi {
         from the api server. This one call is necessary so that we are able to determine
         whether any of the additional API objects that are in the cache have gone stale.
         */
+        //TODO: OMG - This is horrible. Clean this up!
         this.currentVersions = new Versions(wsUrl).load();
+        ImagePaths currentClientIP = new ImagePaths(wsUrl, Constants.API_IMAGE_PATHS + "/"+clientID+"/").load();
+        if( currentClientIP != null){
+            this.networkIP = currentClientIP.apiObj.imagePaths.get(0).imagePath;
+        } else {
+            networkIP = null;
+        }
         
     }
     public ClsRestApi(String localCache, String clientID) throws IOException, CRAException {
@@ -302,13 +398,19 @@ public class ClsRestApi {
     }
     
     public ContactInfo getContactInfo(){
-        if (craContactInfo == null) craContactInfo = new ApiWrapper<>(new ContactInfo(host), objCache, Constants.API_CONTACT_INFO, this.currentVersions);
+        if (craContactInfo == null) craContactInfo = new ApiWithResourcesWrapper<>(new ContactInfo(host), objCache, Constants.API_CONTACT_INFO, this.currentVersions, cacheRoot, clientID, networkIP);
         
         return craContactInfo.loaded ? craContactInfo.api : null;
     }
     
+    public String getContactInfoResource(String resName){
+        ContactInfo ci = getContactInfo();  // force the initialization. TODO: Is this neded?
+        
+        return craContactInfo.getResource(resName);
+    }
+    
     public Reels getReels(){
-        if (craReels == null) craReels = new ApiWithResourcesWrapper<>(new Reels(host), objCache, Constants.API_REELS, this.currentVersions, imgCache, clientID);
+        if (craReels == null) craReels = new ApiWithResourcesWrapper<>(new Reels(host), objCache, Constants.API_REELS, this.currentVersions, cacheRoot, clientID, networkIP);
         
         return craReels.loaded ? craReels.api : null;
     }
@@ -316,11 +418,11 @@ public class ClsRestApi {
     public String getReelsResource(String resName){
         Reels r = getReels();   // force the initialization. TODO: Is this needed?
         
-        return craReels.getCachePathName(resName);
+        return craReels.getResource(resName);
     }
     
     public OurWork getOurWork(){
-        if (craOurWork == null) craOurWork = new ApiWithResourcesWrapper<>(new OurWork(host), objCache, Constants.API_OUR_WORK, this.currentVersions, imgCache, clientID);
+        if (craOurWork == null) craOurWork = new ApiWithResourcesWrapper<>(new OurWork(host), objCache, Constants.API_OUR_WORK, this.currentVersions, cacheRoot, clientID, networkIP);
         
         return craOurWork.loaded ? craOurWork.api : null;
     }
@@ -328,7 +430,7 @@ public class ClsRestApi {
     public String getOurWorkResource(String resName){
         Reels r = getReels();   // force the initialization. TODO: Is this needed?
         
-        return craOurWork.getCachePathName(resName);
+        return craOurWork.getResource(resName);
     }
     
     
