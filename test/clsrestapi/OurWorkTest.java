@@ -15,6 +15,7 @@
  */
 package clsrestapi;
 
+import static clsrestapi.TestHelpers.getHost;
 import org.junit.AfterClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -53,7 +54,7 @@ public class OurWorkTest {
         String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
         
         TestHelpers.logMsg(methodName, "Running ...");
-        OurWork instance = new OurWork();
+        OurWork instance = new OurWork(getHost());
         OurWork result = instance.load();
         assert(instance != null);
         assert(result instanceof OurWork);
@@ -67,8 +68,8 @@ public class OurWorkTest {
         String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
         
         TestHelpers.logMsg(methodName, "Running ...");
-        OurWork instance1 = new OurWork().load();
-        OurWork instance2 = new OurWork(Constants.WSURL).load();
+        OurWork instance1 = new OurWork(getHost()).load();
+        OurWork instance2 = new OurWork(getHost()).load();
         assert(instance1 != null);
         assert(instance2 != null);
         boolean expResult = true;
@@ -85,7 +86,7 @@ public class OurWorkTest {
         String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
         
         TestHelpers.logMsg(methodName, "Running ...");
-        OurWork instance = new OurWork().load();
+        OurWork instance = new OurWork(getHost()).load();
         assert(instance != null);
         String expResult = "";
         String result = instance.toString();
@@ -99,14 +100,14 @@ public class OurWorkTest {
         
         TestHelpers.logMsg(methodName, "Running ...");
         
-        OurWork instance = new OurWork().load();
+        OurWork instance = new OurWork(getHost()).load();
         assert(instance != null);
         
         TestHelpers.logMsg(methodName, "checkDbgObjInstanceData");
         TestHelpers.checkDbgObjInstanceData(instance.dbgObj,Constants.API_OUR_WORK);
 
         TestHelpers.logMsg(methodName, "checkApiVerInstanceData");
-        TestHelpers.checkApiVerInstanceData(instance.apiVer,Constants.API_OUR_WORK);
+        TestHelpers.checkApiVerInstanceData(instance.apiVer,Constants.API_OUR_WORK, "1.0", "1.1");
 
         TestHelpers.logMsg(methodName, "checkApiObjInstanceData");
         assert(instance.apiObj.numVideos == 8);
@@ -130,7 +131,7 @@ public class OurWorkTest {
         String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
         
         TestHelpers.logMsg(methodName, "Running ...");
-        OurWork instance = new OurWork().load();
+        OurWork instance = new OurWork(getHost()).load();
         assert(instance != null);
         
         String filename = TestHelpers.tempFile(Constants.API_OUR_WORK);

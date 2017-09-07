@@ -15,6 +15,7 @@
  */
 package clsrestapi;
 
+import static clsrestapi.TestHelpers.getHost;
 import org.junit.AfterClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -53,8 +54,8 @@ public class ReelsTest {
         String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
         
         TestHelpers.logMsg(methodName, "Running ...");
-        Reels instance1 = new Reels().load();
-        Reels instance2 = new Reels(Constants.WSURL).load();
+        Reels instance1 = new Reels(getHost()).load();
+        Reels instance2 = new Reels(getHost()).load();
         assert(instance1 != null);
         assert(instance2 != null);
         boolean expResult = true;
@@ -71,7 +72,7 @@ public class ReelsTest {
         String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
         
         TestHelpers.logMsg(methodName, "Running ...");
-        Reels instance = new Reels();
+        Reels instance = new Reels(getHost());
         Reels result = instance.load();
         assert(instance != null);
         assert(result instanceof Reels);
@@ -85,7 +86,7 @@ public class ReelsTest {
         String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
         
         TestHelpers.logMsg(methodName, "Running ...");
-        Reels instance = new Reels().load();
+        Reels instance = new Reels(getHost()).load();
         assert(instance != null);
         String expResult = "";
         String result = instance.toString();
@@ -98,20 +99,23 @@ public class ReelsTest {
         String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
         
         TestHelpers.logMsg(methodName, "Running ...");
-        Reels instance = new Reels().load();
+        Reels instance = new Reels(getHost()).load();
         assert(instance != null);
         
         TestHelpers.logMsg(methodName, "checkDbgObjInstanceData");
         TestHelpers.checkDbgObjInstanceData(instance.dbgObj,Constants.API_REELS);
 
         TestHelpers.logMsg(methodName, "checkApiVerInstanceData");
-        TestHelpers.checkApiVerInstanceData(instance.apiVer,Constants.API_REELS);
+        TestHelpers.checkApiVerInstanceData(instance.apiVer,Constants.API_REELS, "1.0", "1.1");
 
         TestHelpers.logMsg(methodName, "checkApiObjInstanceData");
         assert(instance.apiObj.numReels == 5);
         assert(instance.apiObj.reelList.get(0) instanceof Video);
         Video reel = instance.apiObj.reelList.get(0);
         assert(!reel.frame.isEmpty());
+        assert(!reel.hdUrl.isEmpty());
+        assert(!reel.sdUrl.isEmpty());
+        assert(!reel.mobileUrl.isEmpty());
         assert(!reel.sUrl.isEmpty());
         assert(!reel.url.isEmpty());
         assert(!reel.thumb.isEmpty());
@@ -124,7 +128,7 @@ public class ReelsTest {
         String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
         
         TestHelpers.logMsg(methodName, "Running ...");
-        Reels instance = new Reels().load();
+        Reels instance = new Reels(getHost()).load();
         assert(instance != null);
         
         String filename = TestHelpers.tempFile(Constants.API_REELS);

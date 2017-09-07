@@ -15,6 +15,7 @@
  */
 package clsrestapi;
 
+import static clsrestapi.TestHelpers.getHost;
 import java.util.HashMap;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -66,7 +67,7 @@ public class AboutUsTest {
         String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
         
         TestHelpers.logMsg(methodName, "Running ...");
-        AboutUs instance = new AboutUs();
+        AboutUs instance = new AboutUs(getHost());
         AboutUs result = instance.load();
         assert(result instanceof AboutUs);
     }
@@ -80,8 +81,8 @@ public class AboutUsTest {
         
         TestHelpers.logMsg(methodName, "Running ...");
         Object o = null;
-        AboutUs instance1 = new AboutUs().load();
-        AboutUs instance2 = new AboutUs(Constants.WSURL).load();
+        AboutUs instance1 = new AboutUs(getHost()).load();
+        AboutUs instance2 = new AboutUs(getHost()).load();
         assert(instance1 != null);
         assert(instance2 != null);
         boolean expResult = true;
@@ -98,7 +99,7 @@ public class AboutUsTest {
         String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
         
         TestHelpers.logMsg(methodName, "Running ...");
-        AboutUs instance = new AboutUs().load();
+        AboutUs instance = new AboutUs(getHost()).load();
         assert(instance != null);
         String expResult = "";
         String result = instance.toString();
@@ -111,7 +112,7 @@ public class AboutUsTest {
         String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
         
         TestHelpers.logMsg(methodName, "Running ...");
-        AboutUs instance = new AboutUs().load();
+        AboutUs instance = new AboutUs(getHost()).load();
         assert(instance != null);
         
         TestHelpers.logMsg(methodName, "checkDbgObjInstanceData");
@@ -130,7 +131,7 @@ public class AboutUsTest {
         String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
         
         TestHelpers.logMsg(methodName, "Running ...");
-        AboutUs instance = new AboutUs().load();
+        AboutUs instance = new AboutUs(getHost()).load();
         assert(instance != null);
         
         String filename = TestHelpers.tempFile(Constants.API_ABOUT_US);

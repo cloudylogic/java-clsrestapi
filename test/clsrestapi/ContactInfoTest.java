@@ -15,6 +15,7 @@
  */
 package clsrestapi;
 
+import static clsrestapi.TestHelpers.getHost;
 import org.junit.AfterClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -53,8 +54,8 @@ public class ContactInfoTest {
         String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
         
         TestHelpers.logMsg(methodName, "Running ...");
-        ContactInfo instance1 = new ContactInfo().load();
-        ContactInfo instance2 = new ContactInfo(Constants.WSURL).load();
+        ContactInfo instance1 = new ContactInfo(getHost()).load();
+        ContactInfo instance2 = new ContactInfo(getHost()).load();
         assert(instance1 != null);
         assert(instance2 != null);
         boolean expResult = true;
@@ -71,7 +72,7 @@ public class ContactInfoTest {
         String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
         
         TestHelpers.logMsg(methodName, "Running ...");
-        ContactInfo instance = new ContactInfo();
+        ContactInfo instance = new ContactInfo(getHost());
         ContactInfo result = instance.load();
         assert(instance != null);
         assert(result instanceof ContactInfo);
@@ -85,7 +86,7 @@ public class ContactInfoTest {
         String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
         
         TestHelpers.logMsg(methodName, "Running ...");
-        ContactInfo instance = new ContactInfo().load();
+        ContactInfo instance = new ContactInfo(getHost()).load();
         assert(instance != null);
         String expResult = "";
         String result = instance.toString();
@@ -98,22 +99,26 @@ public class ContactInfoTest {
         String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
         
         TestHelpers.logMsg(methodName, "Running ...");
-        ContactInfo instance = new ContactInfo().load();
+        ContactInfo instance = new ContactInfo(getHost()).load();
         assert(instance != null);
         
         TestHelpers.logMsg(methodName, "checkDbgObjInstanceData");
         TestHelpers.checkDbgObjInstanceData(instance.dbgObj,Constants.API_CONTACT_INFO);
 
         TestHelpers.logMsg(methodName, "checkApiVerInstanceData");
-        TestHelpers.checkApiVerInstanceData(instance.apiVer,Constants.API_CONTACT_INFO);
+        TestHelpers.checkApiVerInstanceData(instance.apiVer,Constants.API_CONTACT_INFO, "1.0", "1.2");
 
         TestHelpers.logMsg(methodName, "checkApiObjInstanceData");
         assert(instance.apiObj.location.startsWith("Cloudy Logic Studios")); 
         assert(instance.apiObj.address instanceof Address);
         assert(instance.apiObj.email.equals("info@cloudylogic.com"));
         assert(instance.apiObj.phone.equals("512.710.7257"));
-        assert(instance.apiObj.socialNetworks.size() == 3);
+        assert(instance.apiObj.socialNetworks.size() == 4);
         assert(instance.apiObj.socialNetworks.get(0) instanceof SocialNetwork);
+        assert(!instance.apiObj.socialNetworks.get(0).id.isEmpty());
+        assert(!instance.apiObj.socialNetworks.get(0).network.isEmpty());
+        assert(!instance.apiObj.socialNetworks.get(0).url.isEmpty());
+        assert(!instance.apiObj.socialNetworks.get(0).image.isEmpty());
         
     }
     
@@ -122,7 +127,7 @@ public class ContactInfoTest {
         String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
         
         TestHelpers.logMsg(methodName, "Running ...");
-        ContactInfo instance = new ContactInfo().load();
+        ContactInfo instance = new ContactInfo(getHost()).load();
         assert(instance != null);
         
         String filename = TestHelpers.tempFile(Constants.API_CONTACT_INFO);

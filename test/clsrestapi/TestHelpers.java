@@ -25,6 +25,13 @@ import java.io.File;
  * @author Ken Lowrie
  */
 public class TestHelpers {
+    public static String getHost(){
+        boolean debug = true;
+        if (debug){
+            return "http://localhost:8000";
+        }
+        return Constants.WSURL;
+    }
     /**
      * Validate the contents of a dbgObj from an API return call.
      * @param dbgObj Instance of {@link DbgObj} to validate
@@ -32,15 +39,22 @@ public class TestHelpers {
      */
     public static void checkDbgObjInstanceData(DbgObj dbgObj, String apiName){
         assert(dbgObj.parseOK);
-        assert(dbgObj.query_string.isEmpty());
+        assert(dbgObj.query_string == null ? true : dbgObj.query_string.isEmpty());
         assert(dbgObj.request_uri.equals("/" + apiName + "/"));
         assert(dbgObj.restAPIkeys.get(0).equals(apiName));
         assert(dbgObj.traceMsgQ.isEmpty());
     }
     
-    public static void checkApiVerInstanceData(ApiVer apiVer, String apiName){
+    public static void checkApiVerInstanceData(ApiVer apiVer, String ... apiInfo){
         
-        ApiVer apiVer2 = new ApiVer(apiName, "1.0", "1.0");
+        String apiName = apiInfo.length > 0 ? apiInfo[0] : "Unknown";
+        String api_ver = apiInfo.length > 1 ? apiInfo[1] : "1.0";
+        String api_data_ver = apiInfo.length > 2 ? apiInfo[2] : "1.0";
+//        System.out.println("num args is: " + apiInfo.length);
+        
+        ApiVer apiVer2 = new ApiVer(apiName, api_ver, api_data_ver);
+//        System.out.println("name: "+apiVer.apiName+" ver: "+apiVer.apiVersion+ " data_ver: "+apiVer.apiDataVersion);
+//        System.out.println("name: "+apiName+" ver: "+api_ver+ " data_ver: "+api_data_ver);
         
         assert(apiVer.equals(apiVer2));
     }

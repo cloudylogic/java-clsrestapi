@@ -15,6 +15,7 @@
  */
 package clsrestapi;
 
+import static clsrestapi.TestHelpers.getHost;
 import org.junit.AfterClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -53,8 +54,8 @@ public class VersionsTest {
         String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
         
         TestHelpers.logMsg(methodName, "Running ...");
-        Versions instance1 = new Versions().load();
-        Versions instance2 = new Versions(Constants.WSURL).load();
+        Versions instance1 = new Versions(getHost()).load();
+        Versions instance2 = new Versions(getHost()).load();
         assert(instance1 != null);
         assert(instance2 != null);
         boolean expResult = true;
@@ -71,7 +72,7 @@ public class VersionsTest {
         String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
         
         TestHelpers.logMsg(methodName, "Running ...");
-        Versions instance = new Versions();
+        Versions instance = new Versions(getHost());
         Versions result = instance.load();
         assert(instance != null);
         assert(result instanceof Versions);
@@ -85,7 +86,7 @@ public class VersionsTest {
         String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
         
         TestHelpers.logMsg(methodName, "Running ...");
-        Versions instance = new Versions().load();
+        Versions instance = new Versions(getHost()).load();
         assert(instance != null);
         String expResult = "";
         String result = instance.toString();
@@ -98,7 +99,7 @@ public class VersionsTest {
         String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
         
         TestHelpers.logMsg(methodName, "Running ...");
-        Versions instance = new Versions().load();
+        Versions instance = new Versions(getHost()).load();
         assert(instance != null);
         
         TestHelpers.logMsg(methodName, "checkDbgObjInstanceData");
@@ -108,7 +109,7 @@ public class VersionsTest {
         TestHelpers.checkApiVerInstanceData(instance.apiVer,Constants.API_VERSIONS);
 
         TestHelpers.logMsg(methodName, "checkApiObjInstanceData");
-        assert(instance.apiObj.numApis == 5);
+        assert(instance.apiObj.numApis == 6);
         assert(instance.apiObj.apiList.get(0) instanceof ApiVer);
     }    
     
@@ -117,7 +118,7 @@ public class VersionsTest {
         String methodName = new Object(){}.getClass().getEnclosingMethod().getName();
         
         TestHelpers.logMsg(methodName, "Running ...");
-        Versions instance = new Versions().load();
+        Versions instance = new Versions(getHost()).load();
         assert(instance != null);
         
         String filename = TestHelpers.tempFile(Constants.API_VERSIONS);
