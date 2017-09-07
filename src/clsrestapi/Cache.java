@@ -32,7 +32,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 public class Cache {
     private Path cacheDir;
     
-    public Cache(String cacheDir, String subCacheDir) throws IOException{
+    public Cache(String cacheDir, String ... subCacheDir) throws IOException{
         if( subCacheDir == null){
             this.cacheDir = Paths.get(cacheDir);        
         } else {
@@ -56,7 +56,7 @@ public class Cache {
     }
 
     public Cache(String cacheDir) throws IOException{
-        this(cacheDir,null);
+        this(cacheDir, (String) null);
     }
     
     public Path getPath(){
