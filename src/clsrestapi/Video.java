@@ -32,9 +32,21 @@ public class Video implements Serializable{
      */
     public String url;
     /**
-     * the streaming URL for the video.
+     * the streaming URL for the video, for Apple devices.
      */
     public String sUrl;
+    /**
+     * the HD URL for the video.
+     */
+    public String hdUrl;
+    /**
+     * the SD URL for the video.
+     */
+    public String sdUrl;
+    /**
+     * the mobile URL for the video.
+     */
+    public String mobileUrl;
     /**
      * the thumbnail for the video.
      */
@@ -66,6 +78,9 @@ public class Video implements Serializable{
         return  title.equals(vi.title) &&
                 url.equals(vi.url) &&
                 sUrl.equals(vi.sUrl) &&
+                hdUrl.equals(vi.hdUrl) &&
+                sdUrl.equals(vi.sdUrl) &&
+                mobileUrl.equals(vi.mobileUrl) &&
                 thumb.equals(vi.thumb) &&
                 frame.equals(vi.frame);
     }
@@ -81,6 +96,9 @@ public class Video implements Serializable{
         s = "\ttitle: " + title + Constants.NL +
             "\turl: " + url + Constants.NL +
             "\tsUrl: " + sUrl + Constants.NL +
+            "\thdUrl: " + hdUrl + Constants.NL +
+            "\tsdUrl: " + sdUrl + Constants.NL +
+            "\tmobileUrl: " + mobileUrl + Constants.NL +
             "\tthumb: " + thumb + Constants.NL +
             "\tframe: " + frame + Constants.NL;
         
