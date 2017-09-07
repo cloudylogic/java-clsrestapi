@@ -35,6 +35,10 @@ public class SocialNetwork implements Serializable {
      * the URL for the network.
      */
     public String url;
+    /**
+     * the image name for the network.
+     */
+    public String image;
     
     /**
      * This method tests to see if the passed object is an instance of
@@ -57,7 +61,8 @@ public class SocialNetwork implements Serializable {
         
         return  network.equals(sn.network) &&
                 id.equals(sn.id) &&
-                url.equals(sn.url);
+                url.equals(sn.url) &&
+                image.equals(sn.image);
     }
 
     /**
@@ -71,6 +76,7 @@ public class SocialNetwork implements Serializable {
         sb.append("\tNetwork: ").append(network).append(Constants.NL);
         sb.append("\tID: ").append(id).append(Constants.NL);
         sb.append("\tUrl: ").append(url).append(Constants.NL);
+        sb.append("\tImage: ").append(image).append(Constants.NL);
         
         return sb.toString();
     }   
