@@ -34,7 +34,12 @@ import java.util.Collections;
 public abstract class Base<T extends Base> implements Serializable{
 
     /**
-     * This URL is the fully qualified URL for this API instance.
+     * The remote web host URL for this API instance.
+     */
+    protected String webHost;
+    /**
+     * This URL is the fully qualified URL for this API instance, including
+     * the API name and any parameters.
      */
     protected String webServiceUrl;
     
@@ -65,7 +70,8 @@ public abstract class Base<T extends Base> implements Serializable{
      */
     public Base(String wsUrlRoot,String apiName){
         this.apiName = apiName;
-        this.webServiceUrl = makeUrl(wsUrlRoot.equals(".") ? Constants.WSURL : wsUrlRoot);
+        this.webHost = wsUrlRoot.equals(".") ? Constants.WSURL : wsUrlRoot;
+        this.webServiceUrl = makeUrlWithApiName(this.webHost);
     }
     
     /**
@@ -77,7 +83,7 @@ public abstract class Base<T extends Base> implements Serializable{
      * @param wsUrlRoot The web service URL. If no ending '/', it will be added.
      * @return The fully qualified URL for the API.
      */
-    private String makeUrl(String wsUrlRoot){        
+    private String makeUrlWithApiName(String wsUrlRoot){        
         StringBuilder s = new StringBuilder(wsUrlRoot);
         
         if (!wsUrlRoot.endsWith("/")) s.append('/');
@@ -87,6 +93,37 @@ public abstract class Base<T extends Base> implements Serializable{
         if (!apiName.endsWith("/")) s.append('/');
         
         return s.toString();
+    }
+    
+    /**
+     * 
+     * @return 
+     */
+    protected String getWebHost(){
+        return this.webHost;
+    }
+    
+    /**
+     * 
+     * @param wsUrlRoot
+     * @param otherParts
+     * @return 
+     */
+    protected String makeUrl(String wsUrlRoot, String ... otherParts){
+        StringBuilder sb = new StringBuilder(wsUrlRoot);
+        
+        if (!wsUrlRoot.endsWith("/")) sb.append('/');
+
+        // TODO: This is a mess, clean it up.
+        for( String s: otherParts){
+            if (s.startsWith("/")){
+                sb.append(s.substring(1));
+            } else {
+                sb.append(s);                
+            }
+        }
+        
+        return sb.toString();
     }
     
     /**
